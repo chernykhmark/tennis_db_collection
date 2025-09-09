@@ -1,6 +1,6 @@
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
-
+import pytz
 import time
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -9,7 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from fake_useragent import UserAgent
 import undetected_chromedriver as uc
-from datetime import datetime
+from datetime import datetime, timedelta
 import subprocess
 
 def print_current_datetime():
@@ -34,11 +34,11 @@ def get_chrome_driver():
     options.add_argument('--window-size=1920,1080')
 
     # Для отладки сначала без headless
-    #options.add_argument('--headless=new')
+    options.add_argument('--headless=new')
     #options.add_argument("--disable-application-cache")
     #options.add_argument("--disable-cache")
     #driver = uc.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    driver = uc.Chrome(options=options,use_subprocess=True, version_main=139)
+    driver = uc.Chrome(options=options,use_subprocess=True, version_main=140)
     print_current_datetime()
     print(f'START WITH user_agent : {user_agent}')
     return driver
@@ -93,29 +93,32 @@ def driver_get_tommorow_page_source(driver,URL):
     except:
         pass
     print('driver go tomorrow works')
+    day = datetime.now(pytz.timezone('Europe/Moscow'))  # укажи свой часовой пояс
+    tomorrow = day + timedelta(days=1)
+    tomorrow_date = tomorrow.strftime('%Y-%m-%d')
+    print(f'tomorrow_date is {tomorrow_date}')
 
     try:
         # Находим блок div с data-testid="molecule-score-center-main-filter"
         main_filter_div = driver.find_element(By.CSS_SELECTOR, 'div[data-testid="molecule-score-center-main-filter"]')
 
-        # Внутри находим div с id="splide01-track"
-        splide_track = main_filter_div.find_element(By.ID, "splide01-track")
 
-        # Внутри находим li с классом "splide__slide cursor-pointer is-next"
-        next_slide = splide_track.find_element(By.CSS_SELECTOR, 'li.splide__slide.cursor-pointer.is-next')
+        slide_with_next_date = main_filter_div.find_element(By.CSS_SELECTOR, f'div[data-slide-id="{tomorrow_date}"]')
+                # Внутри находим div с id="splide01-track"
+#        splide_track = main_filter_div.find_element(By.ID, "splide01-track")
 
         # Внутри находим кнопку с data-testid="button-slide-content" и кликаем на нее
-        button = next_slide.find_element(By.CSS_SELECTOR, 'button[data-testid="button-slide-content"]')
+        button = slide_with_next_date.find_element(By.CSS_SELECTOR, 'button[data-testid="button-slide-content"]')
         button.click()
         print("Кнопка была успешно нажата.")
         smooth_scroll(driver)
         print_current_datetime()
         time.sleep(3)
-        li_element = driver.find_element(By.CSS_SELECTOR, 'li.splide__slide.cursor-pointer.is-visible.is-active')
-        dt = driver.execute_script("return arguments[0].querySelector('div').getAttribute('data-slide-id');", li_element)
+#        li_element = driver.find_element(By.CSS_SELECTOR, 'li.splide__slide.cursor-pointer.is-visible.is-active')
+        #dt = tomorrow_date # driver.execute_script("return arguments[0].querySelector('div').getAttribute('data-slide-id');", li_element)
     except Exception as e:
         print(f"Произошла ошибка: {e}")
 
 
     page_source = driver.page_source
-    return page_source, dt
+    return page_source
