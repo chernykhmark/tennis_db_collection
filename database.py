@@ -120,6 +120,10 @@ class Database:
         self.cursor.execute("SELECT * FROM combine_data")
         return self.cursor.fetchall()
 
+    def get_current_rows(self, sql_query="SELECT * FROM combine_data"):
+        self.cursor.execute(sql_query)
+        return self.cursor.fetchall()
+
     def update_winne_from_yesterday(self):
         yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
 
@@ -209,6 +213,16 @@ class Database:
         self.cursor.execute("UPDATE combine_data SET link = ? WHERE game_id = ?", (new_link, game_id))
         self.connection.commit()
         print(f"Обновлено значение link для game_id '{game_id}' на '{new_link}'.")
+
+
+    def update_data_by_sql_query(self, sql_query,params):
+        try:
+            self.cursor.execute(sql_query, params or ())
+            self.connection.commit()
+            print("Query executed successfully")
+        except Exception as e:
+            print(f"Error executing query: {e}")
+            self.connection.rollback()  # Откатываем изменения при ошибке
 
     def drop_result_winner(self):
         yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')

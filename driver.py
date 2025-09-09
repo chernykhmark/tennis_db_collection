@@ -34,7 +34,7 @@ def get_chrome_driver():
     options.add_argument('--window-size=1920,1080')
 
     # Для отладки сначала без headless
-    options.add_argument('--headless=new')
+    #options.add_argument('--headless=new')
     #options.add_argument("--disable-application-cache")
     #options.add_argument("--disable-cache")
     #driver = uc.Chrome(service=Service(ChromeDriverManager().install()), options=options)
