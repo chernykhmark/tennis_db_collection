@@ -7,3 +7,4 @@ get_tomorrow_games.sh
 __pycache__
 venv
 google-chrome-stable_current_amd64.deb
+cron_set
