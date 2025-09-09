@@ -1,3 +1,9 @@
 chrome_update
 outdated_version
 progres.log
+cron.log
+run.sh
+get_tomorrow_games.sh
+__pycache__
+venv
+google-chrome-stable_current_amd64.deb
