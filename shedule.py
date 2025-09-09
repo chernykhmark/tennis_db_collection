@@ -161,8 +161,7 @@ def get_daily_schedule(page_source,db,dt):
             name = text
         return name
 
-    games_today = []
-    time = '-'
+
     soup = BeautifulSoup(page_source, 'html.parser')
 
     if dt == 'None':
@@ -223,23 +222,20 @@ def get_daily_schedule(page_source,db,dt):
         # Проверяем, найден ли элемент
         if soup_header:
             # Ищем вложенный div по классу и извлекаем текст, если найден
-            response_text_div = soup_header.find('div', class_="caps-s7-rs uppercase text-br-2-70")
-
-            if response_text_div:
+            try:
+                response_text_div = soup_header.find('div', class_="caps-s7-rs uppercase text-br-2-70")
                 sex_round = response_text_div.get_text()
-            else:
-                sex_round = ''
-                print('no text!')
-        else:
-            print('no div!')
-            sex_round = ''
+            except:
+                response_text_div = soup_header.find('div',
+                                                     class_="caption-2 md:caption:3 lg:caption-1 text-neutral-05")
+                sex_round = response_text_div.get_text()
 
-        if sex_round != '':
             sex = sex_round.split('|')[0].strip()
             rounds = sex_round.split('|')[1].strip()
         else:
-            sex = '-'
-            rounds = '-'
+            sex = ''
+            rounds = ''
+            print('no text!')
 
         # ПОБЕДЫ В ЛИЧНЫХ ВСТРЕЧАХ
         h2h_player_one_wins, h2h_player_two_wins = h2h_players_wins(soup)
