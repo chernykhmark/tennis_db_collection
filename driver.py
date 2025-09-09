@@ -11,6 +11,7 @@ from fake_useragent import UserAgent
 import undetected_chromedriver as uc
 from datetime import datetime, timedelta
 import subprocess
+from tqdm import tqdm
 
 def print_current_datetime():
     now = datetime.now()
@@ -77,13 +78,13 @@ def driver_get_page_source(driver,URL):
     print_current_datetime()
     print('driver works')
     time.sleep(1)
-    try:
-        li_element = driver.find_element(By.CSS_SELECTOR, 'li.splide__slide.cursor-pointer.is-active.is-visible')
-        dt = driver.execute_script("return arguments[0].querySelector('div').getAttribute('data-slide-id');", li_element)
-    except:
-        dt = datetime.now().strftime("%Y-%m-%d")
+
     page_source = driver.page_source
-    return page_source, dt
+    driver.quit()
+    if not driver:
+        print('driver quit')
+
+    return page_source
 
 def driver_get_tommorow_page_source(driver,URL):
     driver.get(URL)
@@ -104,10 +105,7 @@ def driver_get_tommorow_page_source(driver,URL):
 
 
         slide_with_next_date = main_filter_div.find_element(By.CSS_SELECTOR, f'div[data-slide-id="{tomorrow_date}"]')
-                # Внутри находим div с id="splide01-track"
-#        splide_track = main_filter_div.find_element(By.ID, "splide01-track")
 
-        # Внутри находим кнопку с data-testid="button-slide-content" и кликаем на нее
         button = slide_with_next_date.find_element(By.CSS_SELECTOR, 'button[data-testid="button-slide-content"]')
         button.click()
         print("Кнопка была успешно нажата.")
@@ -122,3 +120,134 @@ def driver_get_tommorow_page_source(driver,URL):
 
     page_source = driver.page_source
     return page_source
+
+
+def load_scheduled_dict(driver):
+    main_div = driver.find_element(By.CSS_SELECTOR, 'div[id="fsbody"]')
+    filters_group = main_div.find_element(By.CSS_SELECTOR, 'div[class="filters__group"]')
+
+    # Добавьте точку в начале XPath для поиска только внутри filters_group
+    scheduled_tab = filters_group.find_element(By.XPATH, ".//div[text()='Scheduled']")
+    scheduled_tab.click()
+    print("Кнопка Scheduled нажата.")
+    time.sleep(5)
+    tennis_games_div = main_div.find_element(By.CSS_SELECTOR, 'div[class="sportName tennis"]')
+
+    games_dict = {}
+    all_elements = tennis_games_div.find_elements(By.XPATH, './div')
+    current_key = None
+    href_list = []
+    for element in tqdm(all_elements):
+        if 'headerLeague__wrapper' in element.get_attribute('class'):
+            # Сохраняем предыдущую группу
+            if current_key is not None:
+                games_dict[current_key] = href_list
+            # Начинаем новую группу
+            current_key = element.text
+            href_list = []
+        elif element.get_attribute('data-event-row') == 'true':
+            # Ищем ссылку внутри элемента
+            try:
+                link = element.find_element(By.TAG_NAME, 'a')
+                href = link.get_attribute('href')
+                href_list.append(href)
+            except:
+                continue
+
+    # Добавляем последнюю группу
+    if current_key is not None:
+        games_dict[current_key] = href_list
+
+    # Сохранение
+    import json
+    with open('data/scheduled_json_{datetime.now()}.json', 'w', encoding='utf-8') as f:
+        json.dump(games_dict, f, ensure_ascii=False, indent=2)
+
+    print("Словарь сохранен в scheduled_dict.json")
+
+    page_source = driver.page_source
+    with open(f'data/scheduled_html_{datetime.now()}.html', 'w') as file:
+        file.write(page_source)
+
+def load_finished_dict(driver):
+    main_div = driver.find_element(By.CSS_SELECTOR, 'div[id="fsbody"]')
+    filters_group = main_div.find_element(By.CSS_SELECTOR, 'div[class="filters__group"]')
+
+    # Добавьте точку в начале XPath для поиска только внутри filters_group
+    scheduled_tab = filters_group.find_element(By.XPATH, ".//div[text()='Finished']")
+    scheduled_tab.click()
+    print("Кнопка Finished была нажата.")
+    time.sleep(5)
+    tennis_games_div = main_div.find_element(By.CSS_SELECTOR, 'div[class="sportName tennis"]')
+
+    games_dict = {}
+    all_elements = tennis_games_div.find_elements(By.XPATH, './div')
+    current_key = None
+    href_list = []
+    for element in tqdm(all_elements):
+        if 'headerLeague__wrapper' in element.get_attribute('class'):
+            # Сохраняем предыдущую группу
+            if current_key is not None:
+                games_dict[current_key] = href_list
+            # Начинаем новую группу
+            current_key = element.text
+            href_list = []
+        elif element.get_attribute('data-event-row') == 'true':
+            # Ищем ссылку внутри элемента
+            try:
+                link = element.find_element(By.TAG_NAME, 'a')
+                href = link.get_attribute('href')
+                href_list.append(href)
+            except:
+                continue
+
+    # Добавляем последнюю группу
+    if current_key is not None:
+        games_dict[current_key] = href_list
+
+    # Сохранение
+    import json
+    with open('data/finished_json_{datetime.now()}.json', 'w', encoding='utf-8') as f:
+        json.dump(games_dict, f, ensure_ascii=False, indent=2)
+
+    print("Словарь сохранен в finished_dict.json")
+
+    page_source = driver.page_source
+    with open(f'data/finished_html_{datetime.now()}.html', 'w') as file:
+        file.write(page_source)
+
+
+
+
+
+def driver_get_flashscore(URL):
+    driver = get_chrome_driver()
+    driver.get(URL)
+
+    try:
+        handle_cookie_popup(driver)
+    except:
+        print('no pop-up fot handle')
+
+    smooth_scroll(driver)
+    print('driver smooth_scroll')
+    time.sleep(1)
+
+    print('start load_scheduled_dict')
+    try:
+        load_scheduled_dict(driver)
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
+    time.sleep(5)
+
+    print('start load_finished_dict')
+    try:
+        load_finished_dict(driver)
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
+
+    finally:
+        driver.quit()
+        print('driver quit')
+        print_current_datetime()
+
