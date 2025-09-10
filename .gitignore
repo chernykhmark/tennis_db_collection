@@ -3,7 +3,7 @@ outdated_version
 progres.log.DS_Store
 __pycache__
 requirements.txt
-tennis_data.db
+eurosport/tennis_data.db
 test
 flashscore/dataflashscore/data/
 .env

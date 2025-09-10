@@ -1,10 +1,7 @@
-from tqdm import tqdm
-import sqlite3
-
-from database import Database
+from eurosport.database import Database
 # Подключение к базе данных
 
-from update_results import request_and_parse
+from eurosport.update_results import request_and_parse
 
 db = Database()
 
