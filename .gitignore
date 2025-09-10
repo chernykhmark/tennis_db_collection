@@ -13,4 +13,9 @@ __pycache__
 requirements.txt
 tennis_data.db
 test
+<<<<<<< HEAD
 tennis_data.db
+=======
+flashscore/dataflashscore/data/
+>>>>>>> origin/main
+flashscore/data/

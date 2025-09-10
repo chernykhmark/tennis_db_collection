@@ -11,6 +11,10 @@ import undetected_chromedriver as uc
 from datetime import datetime, timedelta
 from tqdm import tqdm
 from selenium.common.exceptions import TimeoutException
+import json
+import os
+
+# Создайте директорию если нет
 
 def print_current_datetime():
     now = datetime.now()
@@ -57,9 +61,6 @@ def smooth_scroll(driver, scroll_down=True, scroll_up=True, num_iterations=2):
 
 def driver_get_page_source(URL):
     driver = get_chrome_driver()
-    #driver.get(URL)
-
-    driver.set_page_load_timeout(30)  # 30 секунд максимум
 
     try:
         driver.get(URL)
@@ -122,18 +123,17 @@ def driver_get_tommorow_page_source(URL):
 def load_scheduled_dict(driver):
     main_div = driver.find_element(By.CSS_SELECTOR, 'div[id="fsbody"]')
     filters_group = main_div.find_element(By.CSS_SELECTOR, 'div[class="filters__group"]')
-
-    # Добавьте точку в начале XPath для поиска только внутри filters_group
     scheduled_tab = filters_group.find_element(By.XPATH, ".//div[text()='Scheduled']")
     scheduled_tab.click()
     print("Кнопка Scheduled нажата.")
-    time.sleep(5)
+    time.sleep(3)
     tennis_games_div = main_div.find_element(By.CSS_SELECTOR, 'div[class="sportName tennis"]')
 
     games_dict = {}
     all_elements = tennis_games_div.find_elements(By.XPATH, './div')
     current_key = None
     href_list = []
+
     for element in tqdm(all_elements):
         if 'headerLeague__wrapper' in element.get_attribute('class'):
             # Сохраняем предыдущую группу
@@ -156,15 +156,22 @@ def load_scheduled_dict(driver):
         games_dict[current_key] = href_list
 
     # Сохранение
-    import json
-    with open(f'data/scheduled_json_{datetime.now()}.json', 'w', encoding='utf-8') as f:
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    with open(f'data/scheduled_json_{timestamp}.json', 'w', encoding='utf-8') as f:
         json.dump(games_dict, f, ensure_ascii=False, indent=2)
 
-    print("Словарь сохранен в scheduled_dict.json")
+    print(f"Словарь сохранен в scheduled_json_{timestamp}.json")
 
-    page_source = driver.page_source
-    with open(f'data/scheduled_html_{datetime.now()}.html', 'w') as file:
-        file.write(page_source)
+    # Дополнительно сохраняем только tennis блок HTML
+    tennis_html = tennis_games_div.get_attribute('outerHTML')
+    with open(f'data/scheduled_html_{timestamp}.html', 'w', encoding='utf-8') as file:
+        file.write(tennis_html)
+
+    print(f"Источник сохранен в scheduled_html_{timestamp}.html")
+
+
+
 
 def load_finished_dict(driver):
     main_div = driver.find_element(By.CSS_SELECTOR, 'div[id="fsbody"]')
@@ -174,7 +181,7 @@ def load_finished_dict(driver):
     scheduled_tab = filters_group.find_element(By.XPATH, ".//div[text()='Finished']")
     scheduled_tab.click()
     print("Кнопка Finished была нажата.")
-    time.sleep(5)
+    time.sleep(3)
     tennis_games_div = main_div.find_element(By.CSS_SELECTOR, 'div[class="sportName tennis"]')
 
     games_dict = {}
@@ -202,17 +209,18 @@ def load_finished_dict(driver):
     if current_key is not None:
         games_dict[current_key] = href_list
 
-    # Сохранение
-    import json
-    with open(f'data/finished_json_{datetime.now()}.json', 'w', encoding='utf-8') as f:
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    with open(f'data/finished_json_{timestamp}.json', 'w', encoding='utf-8') as f:
         json.dump(games_dict, f, ensure_ascii=False, indent=2)
 
-    print("Словарь сохранен в finished_dict.json")
+    print(f"Словарь сохранен в finished_json_{timestamp}.json")
 
-    page_source = driver.page_source
-    with open(f'data/finished_html_{datetime.now()}.html', 'w') as file:
-        file.write(page_source)
+    # Дополнительно сохраняем только tennis блок HTML
+    tennis_html = tennis_games_div.get_attribute('outerHTML')
+    with open(f'data/finished_html_{timestamp}.html', 'w', encoding='utf-8') as file:
+        file.write(tennis_html)
 
+    print(f"Источник сохранен в finished_html_{timestamp}.html")
 
 
 
@@ -220,11 +228,6 @@ def load_finished_dict(driver):
 def driver_get_flashscore(URL):
     driver = get_chrome_driver()
     driver.get(URL)
-
-    # try:
-    #     handle_cookie_popup(driver)
-    # except:
-    #     print('no pop-up fot handle')
 
     smooth_scroll(driver)
     print('driver smooth_scroll')
