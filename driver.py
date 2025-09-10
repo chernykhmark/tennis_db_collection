@@ -157,7 +157,7 @@ def load_scheduled_dict(driver):
 
     # Сохранение
     import json
-    with open('data/scheduled_json_{datetime.now()}.json', 'w', encoding='utf-8') as f:
+    with open(f'data/scheduled_json_{datetime.now()}.json', 'w', encoding='utf-8') as f:
         json.dump(games_dict, f, ensure_ascii=False, indent=2)
 
     print("Словарь сохранен в scheduled_dict.json")
@@ -204,7 +204,7 @@ def load_finished_dict(driver):
 
     # Сохранение
     import json
-    with open('data/finished_json_{datetime.now()}.json', 'w', encoding='utf-8') as f:
+    with open(f'data/finished_json_{datetime.now()}.json', 'w', encoding='utf-8') as f:
         json.dump(games_dict, f, ensure_ascii=False, indent=2)
 
     print("Словарь сохранен в finished_dict.json")
