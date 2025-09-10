@@ -2,28 +2,20 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 import pytz
 import time
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from fake_useragent import UserAgent
 import undetected_chromedriver as uc
 from datetime import datetime, timedelta
-import subprocess
 from tqdm import tqdm
+from selenium.common.exceptions import TimeoutException
 
 def print_current_datetime():
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     print(current_time)
 
-def update_chrome_driver():
-    result = subprocess.run(["/home/lev/tennis/chrome_update/chrome_update.sh"], capture_output=True, text=True)
-
-    # Вывод результата выполнения скрипта
-    print("Вывод:", result.stdout)
-    print("Ошибки:", result.stderr)
 
 def get_chrome_driver():
     options = uc.ChromeOptions()
@@ -33,12 +25,7 @@ def get_chrome_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-
-    # Для отладки сначала без headless
-    #options.add_argument('--headless=new')
-    #options.add_argument("--disable-application-cache")
-    #options.add_argument("--disable-cache")
-    #driver = uc.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    options.add_argument('--headless=new')
     driver = uc.Chrome(options=options,use_subprocess=True, version_main=140)
     print_current_datetime()
     print(f'START WITH user_agent : {user_agent}')
@@ -67,8 +54,18 @@ def smooth_scroll(driver, scroll_down=True, scroll_up=True, num_iterations=2):
             scroll_page('up')
 
 
-def driver_get_page_source(driver,URL):
-    driver.get(URL)
+def driver_get_page_source(URL):
+    driver = get_chrome_driver()
+    #driver.get(URL)
+
+    driver.set_page_load_timeout(30)  # 30 секунд максимум
+
+    try:
+        driver.get(URL)
+    except TimeoutException:
+
+        driver.quit()
+        return TimeoutException
     try:
         handle_cookie_popup(driver)
         print('driver handle')
@@ -86,7 +83,8 @@ def driver_get_page_source(driver,URL):
 
     return page_source
 
-def driver_get_tommorow_page_source(driver,URL):
+def driver_get_tommorow_page_source(URL):
+    driver = get_chrome_driver()
     driver.get(URL)
     try:
         handle_cookie_popup(driver)
@@ -100,25 +98,23 @@ def driver_get_tommorow_page_source(driver,URL):
     print(f'tomorrow_date is {tomorrow_date}')
 
     try:
-        # Находим блок div с data-testid="molecule-score-center-main-filter"
         main_filter_div = driver.find_element(By.CSS_SELECTOR, 'div[data-testid="molecule-score-center-main-filter"]')
-
-
         slide_with_next_date = main_filter_div.find_element(By.CSS_SELECTOR, f'div[data-slide-id="{tomorrow_date}"]')
-
         button = slide_with_next_date.find_element(By.CSS_SELECTOR, 'button[data-testid="button-slide-content"]')
         button.click()
         print("Кнопка была успешно нажата.")
         smooth_scroll(driver)
         print_current_datetime()
         time.sleep(3)
-#        li_element = driver.find_element(By.CSS_SELECTOR, 'li.splide__slide.cursor-pointer.is-visible.is-active')
-        #dt = tomorrow_date # driver.execute_script("return arguments[0].querySelector('div').getAttribute('data-slide-id');", li_element)
     except Exception as e:
         print(f"Произошла ошибка: {e}")
 
 
     page_source = driver.page_source
+    driver.quit()
+    if not driver:
+        print('driver quit')
+
     return page_source
 
 
