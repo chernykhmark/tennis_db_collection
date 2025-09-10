@@ -1,9 +1,10 @@
 from typing import Dict
 
+from bson import ObjectId
 from dotenv import load_dotenv
 load_dotenv()
 from logging import Logger
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 import os
 import json
 from datetime import datetime
@@ -174,7 +175,45 @@ class MongoDB:
             print(f"Ошибка в процессе обработки: {e}")
             return 0
 
+    def get_matches_url_by_ids_dict(self) -> Dict[str, str]:
+        """
+        Возвращает словарь {_id: match_url} из коллекции matches
+        """
+        result_dict = {}
 
+        cursor = self.db.matches.find(
+            {},
+            {"_id": 1, "match_url": 1}
+        )
+
+        for doc in cursor:
+            result_dict[str(doc["_id"])] = doc["match_url"]
+
+        return result_dict
+
+    def update_matches_html(self, html_data_dict: Dict[str, str]):
+        """
+        Обновляет поле match_html для документов в коллекции matches
+        по совпадению _id с ключами словаря
+
+        Args:
+            html_data_dict: {_id: html_content}
+        """
+        bulk_operations = []
+
+        for doc_id, html_content in html_data_dict.items():
+            # Создаем операцию обновления для каждого совпадения
+            bulk_operations.append(
+                UpdateOne(
+                    {"_id": ObjectId(doc_id)},  # ищем по _id
+                    {"$set": {"html": html_content}},  # обновляем поле
+                    upsert=False  # только обновление, не вставка
+                )
+            )
+
+        # Выполняем bulk операцию
+        if bulk_operations:
+            self.db.matches.bulk_write(bulk_operations, ordered=False)
 
 
 
