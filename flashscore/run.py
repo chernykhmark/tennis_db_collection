@@ -13,6 +13,7 @@ def main():
     global URL
     bot = BotSender()
     try:
+        os.makedirs('data', exist_ok=True)
         driver_get_flashscore(URL)
     except Exception as e:
         error_msg = f"[{datetime.now()}] Ошибка в скрипте: {str(e)}"
