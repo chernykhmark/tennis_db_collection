@@ -42,6 +42,22 @@ def request_and_parse(url, proxies=None):
         print(f"Ошибка: {response.status_code}")
         return None
 
+def request_and_return_html(url, proxies=None):
+    t.sleep(random.uniform(1, 5))
+    headers = get_random_headers()
+    if proxies:
+        proxy = random.choice(proxies)
+        response = requests.get(url, headers=headers, proxies={'http': proxy, 'https': proxy})
+    else:
+        response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        # Передача ответа в BeautifulSoup для парсинга
+        html = response.text
+        return html
+    else:
+        print(f"Ошибка: {response.status_code}")
+        return None
+
 def get_results(URL):
     soup = request_and_parse(URL)
     if soup == None:

@@ -11,11 +11,7 @@ cron_set
 progres.log.DS_Store
 __pycache__
 requirements.txt
-tennis_data.db
+eurosport/tennis_data.db
 test
-<<<<<<< HEAD
-tennis_data.db
-=======
-flashscore/dataflashscore/data/
->>>>>>> origin/main
 flashscore/data/
+.env
