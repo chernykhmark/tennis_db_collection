@@ -7,6 +7,7 @@ from  datetime import datetime
 URL = 'https://www.eurosport.com/tennis/score-center.shtml'
 
 def main():
+    print(f"\n{'=' * 60}\n")
     global URL
     bot = BotSender()
     db = Database()

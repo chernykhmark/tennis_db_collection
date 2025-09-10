@@ -5,6 +5,7 @@ from notifications import BotSender
 URL = 'https://www.flashscore.co.uk/tennis/'
 
 def main():
+    print(f"\n{'=' * 60}\n")
     global URL
     bot = BotSender()
     try:

@@ -11,6 +11,7 @@ tomorrow = day + timedelta(days=1)
 tomorrow_date = tomorrow.strftime('%Y-%m-%d')
 
 def main():
+    print(f"\n{'=' * 60}\n")
     global URL,tomorrow_date
     db = Database()
     bot = BotSender()
