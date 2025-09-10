@@ -5,3 +5,4 @@ __pycache__
 requirements.txt
 tennis_data.db
 test
+flashscore/dataflashscore/data/
