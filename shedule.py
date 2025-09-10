@@ -150,7 +150,7 @@ def compare_players(player_one, player_one_rank, h2h_player_one_wins, prev_match
         return "Не определен", 0
 
 
-def get_daily_schedule(page_source,db,dt):
+def get_daily_schedule(page_source,db,dt=pd.Timestamp.now().strftime('%Y-%m-%d')):
 
     def extract_player_info(elem):
         text = elem.get_text(strip=True)
@@ -163,10 +163,6 @@ def get_daily_schedule(page_source,db,dt):
 
 
     soup = BeautifulSoup(page_source, 'html.parser')
-
-    if dt == 'None':
-        print('!dt nonetype')
-        dt = pd.Timestamp.now().strftime('%Y-%m-%d')
 
     try:
         games_list = soup.find_all('a', {'data-testid': "link-match-card"})

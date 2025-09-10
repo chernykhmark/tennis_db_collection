@@ -1,5 +1,6 @@
 chrome_update
 outdated_version
+<<<<<<< HEAD
 progres.log
 cron.log
 run.sh
@@ -8,3 +9,10 @@ __pycache__
 venv
 google-chrome-stable_current_amd64.deb
 cron_set
+=======
+progres.log.DS_Store
+__pycache__
+requirements.txt
+tennis_data.db
+test
+>>>>>>> origin/main

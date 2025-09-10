@@ -1,0 +1,17 @@
+from driver import driver_get_flashscore
+from datetime import datetime
+from notifications import BotSender
+
+URL = 'https://www.flashscore.co.uk/tennis/'
+
+def main():
+    global URL
+    bot = BotSender()
+    try:
+        driver_get_flashscore(URL)
+    except Exception as e:
+        error_msg = f"[{datetime.now()}] Ошибка в скрипте: {str(e)}"
+        bot.send_notification(error_msg)
+
+if __name__=='__main__':
+    main()
