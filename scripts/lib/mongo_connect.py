@@ -1,15 +1,27 @@
+from typing import Dict
+
 from dotenv import load_dotenv
 load_dotenv()
 from logging import Logger
 from pymongo import MongoClient
 import os
 import json
-from pathlib import Path
 from datetime import datetime
 import uuid
+# "new" - новый документ
+#
+# "processing" - в обработке
+#
+# "processed" - обработан
+#
+# "completed" - завершен
+#
+# "error" - ошибка обработки
+#
+# "archived" - архивный
 
 
-class Mongo:
+class MongoDB:
     def __init__(self):
         # Данные для подключения
         self.MONGO_HOST = os.getenv('MONGO_HOST')
@@ -24,9 +36,13 @@ class Mongo:
         self.db = self.client[self.MONGO_DB_NAME]
         print("Успешное подключение к MongoDB")
 
-    def process_files(self, directory_path=None, logger=None):
-        if directory_path is None:
-            directory_path = self.MONGO_DATA_FILE_PATH
+    def close(self):
+        self.client.close()
+
+
+    def process_origin_files_from_directory(self,log: Logger):
+
+        directory_path = self.MONGO_DATA_FILE_PATH
 
         documents = {}
 
@@ -34,8 +50,7 @@ class Mongo:
         for file_name in os.listdir(directory_path):
             file_path = os.path.join(directory_path, file_name)
             if os.path.isfile(file_path):
-                if logger:
-                    logger.info(f'processing {file_name}')
+                log.info(f'processing {file_name}')
 
                 # Разбираем имя файла
                 parts = file_name.split('_')
@@ -49,7 +64,7 @@ class Mongo:
 
                 # Формируем ключ документа (type_as + timestamp)
                 doc_key = f"{type_as}_{date_str}_{time_str}"
-                updated_ts = datetime.strptime(f"{date_str}_{time_str}", "%Y-%m-%d_%H-%M-%S")
+                created_ts = datetime.strptime(f"{date_str}_{time_str}", "%Y-%m-%d_%H-%M-%S")
 
                 # Читаем содержимое файла
                 try:
@@ -58,16 +73,16 @@ class Mongo:
                         if data_type == 'json':
                             content = json.loads(content)
                 except Exception as e:
-                    if logger:
-                        logger.error(f"Error reading file {file_name}: {e}")
+
+                    log.error(f"Error reading file {file_name}: {e}")
                     continue
 
                 # Создаем или обновляем документ
                 if doc_key not in documents:
                     documents[doc_key] = {
                         "_id": str(uuid.uuid4()),  # Уникальный ID
-                        "created_ts": datetime.utcnow(),
-                        "updated_ts": updated_ts,
+                        "updated_ts": datetime.utcnow(),
+                        "created_ts": created_ts,
                         "type_as": type_as,
                         "status": "new",
                         "content": {
@@ -85,20 +100,99 @@ class Mongo:
 
         # Сохраняем все документы
         for doc_key, doc in documents.items():
-            self.db.collection.insert_one(doc)
-            if logger:
-                logger.info(f'document with key {doc_key} saved')
+            self.db.collection.update_one(
+                {"created_ts": doc["created_ts"], "type_as": doc["type_as"]},
+                {"$setOnInsert": doc},  # Вставляем только если не существует
+                upsert=True
+            )
+            log.info(f'document with key {doc_key} saved')
 
-    def close(self):
-        self.client.close()
 
 
-if __name__ == "__main__":
-    db = Mongo()
-    try:
-        db.process_files(logger=Logger(__name__))
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-        raise e
-    finally:
-        db.close()
+
+        # 2. Обновляем статус исходного документа
+    def update_status(self,source_collection,document_id,status='processed'):
+
+        self.db[source_collection].update_one(
+            {"_id": document_id},
+            {
+                "$set": {
+                    "status": status,
+                    "updated_ts": datetime.utcnow()
+                }
+            }
+        )
+
+    def get_new_doc(self, source_collection, type:str, log: Logger): #target_collection, external_processor, next_processor):
+        """Периодическая обработка документов со статусом 'new'"""
+        try:
+            # Находим все документы со статусом "new"
+            new_documents = self.db[source_collection].find(
+                {"$and": [{"status": "new"}, {"type_as": type}]}
+            ).sort("created_ts", 1)  # Сортируем по дате создания
+
+            docs = {}
+            for document in new_documents:
+                docs[document["_id"]] = document.get("content", {}).get("json")
+                self.update_status(source_collection, document["_id"])
+                log.info(f'collection status is processed')
+            return docs
+
+        except Exception as e:
+            log.info(f'finished_docs for {datetime.now()} with e: {e}')
+            pass
+
+
+    def create_matches(self, data_dict: Dict, status: str):
+        """
+        Преобразует словарь с турнирами и создает документы матчей
+        Args:
+            data_dict: {parent_id: {tournament_name: [urls]}}
+            status: статус для всех создаваемых матчей
+            collection: коллекция MongoDB для вставки
+        """
+        matches_to_insert = []
+        try:
+            for parent_id, tournaments in data_dict.items():
+                for tournament_name, urls in tournaments.items():
+                    for url in urls:
+                        match_doc = {
+                            "parent_id": parent_id,
+                            "tournament_name": tournament_name,
+                            "match_id": "",
+                            "match_url": url,
+                            "html": "",
+                            "created_at": datetime.utcnow(),
+                            "type_as": status
+                        }
+                        matches_to_insert.append(match_doc)
+
+            if matches_to_insert:
+                self.db.matches.insert_many(matches_to_insert, ordered=False)
+
+        except Exception as e:
+            print(f"Ошибка в процессе обработки: {e}")
+            return 0
+
+
+
+
+
+    def create_target_document(self, source_document_id, processed_data, original_data, target_collection):
+        """Создание нового документа в целевой коллекции"""
+        try:
+            new_document = {
+                "_id": str(uuid.uuid4()),
+                "source_document_ref": source_document_id,  # Внешний ключ
+                "created_ts": datetime.utcnow(),
+                "updated_ts": datetime.utcnow(),
+                "processed_data": processed_data,
+                "original_data": original_data,
+                "processing_status": "completed"
+            }
+
+            result = self.db[target_collection].insert_one(new_document)
+            return result.inserted_id
+
+        except Exception as e:
+            print(f"Ошибка создания целевого документа: {e}")
