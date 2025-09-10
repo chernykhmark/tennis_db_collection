@@ -1,5 +1,6 @@
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
+
 import pytz
 import time
 from selenium.webdriver.common.by import By
@@ -220,10 +221,10 @@ def driver_get_flashscore(URL):
     driver = get_chrome_driver()
     driver.get(URL)
 
-    try:
-        handle_cookie_popup(driver)
-    except:
-        print('no pop-up fot handle')
+    # try:
+    #     handle_cookie_popup(driver)
+    # except:
+    #     print('no pop-up fot handle')
 
     smooth_scroll(driver)
     print('driver smooth_scroll')
