@@ -18,17 +18,17 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    command: [
+      "mongod",
+      "--wiredTigerCacheSizeGB", "0.5", # Резервируем 500МБ под кеш WiredTiger
+      "--quiet",
+      "--bind_ip_all"
+    ]
     deploy:
       resources:
         limits:
           memory: 700M # MongoDB может использовать до 700МБ, не мешая ОС
           cpus: '0.7'  # Практически все ядро для операций вставки/агрегации
-      command: [
-        "mongod",
-        "--wiredTigerCacheSizeGB", "0.5", # Резервируем 500МБ под кеш WiredTiger
-        "--quiet",
-        "--bind_ip_all"
-      ]
 
 volumes:
   mongo_data:
