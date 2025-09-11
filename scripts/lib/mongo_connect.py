@@ -3,7 +3,10 @@ from typing import Dict
 from bson import ObjectId
 from dotenv import load_dotenv
 load_dotenv()
-from logging import Logger
+import logging
+
+log = logging.getLogger(__name__)
+
 from pymongo import MongoClient, UpdateOne
 import os
 import json
@@ -41,7 +44,7 @@ class MongoDB:
         self.client.close()
 
 
-    def process_origin_files_from_directory(self,log: Logger):
+    def process_origin_files_from_directory(self,log):
 
         directory_path = self.MONGO_DATA_FILE_PATH
 
@@ -124,7 +127,7 @@ class MongoDB:
             }
         )
 
-    def get_new_doc(self, source_collection, type:str, log: Logger): #target_collection, external_processor, next_processor):
+    def get_new_doc(self, source_collection, type:str, log): #target_collection, external_processor, next_processor):
         """Периодическая обработка документов со статусом 'new'"""
         try:
             # Находим все документы со статусом "new"
@@ -214,8 +217,7 @@ class MongoDB:
         # Выполняем bulk операцию
         if bulk_operations:
             self.db.matches.bulk_write(bulk_operations, ordered=False)
-
-
+            log.info(f'батч с html_content записан')
 
     def create_target_document(self, source_document_id, processed_data, original_data, target_collection):
         """Создание нового документа в целевой коллекции"""
