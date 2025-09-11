@@ -185,9 +185,10 @@ class MongoDB:
         result_dict = {}
 
         cursor = self.db.matches.find(
-            {},
+            {"html": ""},
             {"_id": 1, "match_url": 1}
         )
+
 
         for doc in cursor:
             result_dict[str(doc["_id"])] = doc["match_url"]

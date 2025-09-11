@@ -27,7 +27,7 @@ if __name__ == "__main__":
                    html_data_dict[key] = request_and_return_html(value)
 
                 db.update_matches_html(html_data_dict)
-                log.info(f'Батч № {i} отправлен в базу')
+                print(f'Батч № {i} отправлен в базу')
         else:
             html_data_dict = {}
             for key, value in tqdm(result_dict.items()):
