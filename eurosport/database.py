@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+import os
 import pandas as pd
 import sqlite3
 from datetime import datetime,timedelta
@@ -5,6 +8,8 @@ from update_results import get_results
 from telegram import Bot
 import asyncio
 import time as t
+
+
 
 class Database:
     def __init__(self, db_name='./tennis_data.db'):
@@ -38,7 +43,24 @@ class Database:
             time TEXT,
             result_winner TEXT DEFAULT ''
         )''')
+        # self.cursor.execute('''CREATE TABLE IF NOT EXISTS srv_wf_settings (
+        #                         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        #                         workflow_key TEXT NOT NULL UNIQUE,
+        #                         workflow_settings TEXT NOT NULL
+        # )''')
         self.connection.commit()
+
+    # def check_workflow_key_from_service_table(self, workflow_key):
+    #     self.cursor.execute(
+    #         '''
+    #         created_at
+    #         '''
+    #
+    #     )
+    #
+    # def save_workflow_key_to_service_table(self):
+
+
 
     def check_game_id_exists(self, game_id):
         # Проверка, существует ли game_id в базе данных
@@ -200,10 +222,10 @@ class Database:
 
     async def send_results(self, message):
         # Инициализация бота и отправка сообщения
-        bot = Bot(token='7216731297:AAE-boZvsnfoiw-lwO9ntgSJz-qJYHRQ6lU')
+        bot = Bot(token=os.getenv('ATP_BOT_TOKEN'))
         try:
-            await bot.send_message(chat_id='1030144895', text=message)
-            await bot.send_message(chat_id='494421588', text=message)
+            await bot.send_message(chat_id=os.getenv('TG_USER_ADMIN'), text=message)
+            await bot.send_message(chat_id=os.getenv('TG_USER'), text=message)
             print("Сообщение отправлено в Telegram")
         except Exception as e:
             print(f"Ошибка при отправке сообщения в Telegram: {e}")
