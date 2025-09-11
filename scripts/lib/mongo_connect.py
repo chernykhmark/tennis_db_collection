@@ -220,6 +220,10 @@ class MongoDB:
             self.db.matches.bulk_write(bulk_operations, ordered=False)
             log.info(f'батч с html_content записан')
 
+
+
+
+
     def create_target_document(self, source_document_id, processed_data, original_data, target_collection):
         """Создание нового документа в целевой коллекции"""
         try:

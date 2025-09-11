@@ -18,7 +18,7 @@ def main():
 
     except Exception as e:
         error_msg = f"[{datetime.now()}] Ошибка в скрипте: {str(e)}"
-        bot.send_notification(error_msg)
+        bot.send_notification(error_msg,script_name='eurosport/run.py')
 
     finally:
         db.close()

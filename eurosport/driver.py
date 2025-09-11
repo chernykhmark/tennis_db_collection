@@ -14,14 +14,39 @@ from selenium.common.exceptions import TimeoutException
 import json
 import os
 
-# Создайте директорию если нет
+# ДЕКОРАТОР ДЛЯ ПОВТОРНОГО ЗАПУСКА
+
+import time
+from functools import wraps
+
+def retry_on_failure(max_attempts=2, delay=5):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_attempts):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    print(f"Попытка {attempt + 1}/{max_attempts} failed: {e}")
+                    if attempt < max_attempts - 1:
+                        print(f"Retrying in {delay} seconds...")
+                        time.sleep(delay)
+                    else:
+                        print("All attempts failed")
+                        raise
+        return wrapper
+    return decorator
+
+
+# ФУНКЦИЯ ПРИНТА ДАТЫ И ВРЕМЕНИ
+
 
 def print_current_datetime():
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     print(current_time)
 
-
+@retry_on_failure(max_attempts=2, delay=10)
 def get_chrome_driver():
     options = uc.ChromeOptions()
     ua = UserAgent()
@@ -58,10 +83,9 @@ def smooth_scroll(driver, scroll_down=True, scroll_up=True, num_iterations=2):
         if scroll_up:
             scroll_page('up')
 
-
+@retry_on_failure(max_attempts=2, delay=10)
 def driver_get_page_source(URL):
     driver = get_chrome_driver()
-
     try:
         driver.get(URL)
     except TimeoutException:
@@ -85,6 +109,7 @@ def driver_get_page_source(URL):
 
     return page_source
 
+@retry_on_failure(max_attempts=2, delay=10)
 def driver_get_tommorow_page_source(URL):
     driver = get_chrome_driver()
     driver.get(URL)
@@ -224,8 +249,9 @@ def load_finished_dict(driver):
 
 
 
-
+@retry_on_failure(max_attempts=2, delay=10)
 def driver_get_flashscore(URL):
+
     driver = get_chrome_driver()
     driver.get(URL)
 
@@ -250,4 +276,7 @@ def driver_get_flashscore(URL):
         driver.quit()
         print('driver quit')
         print_current_datetime()
+
+
+
 

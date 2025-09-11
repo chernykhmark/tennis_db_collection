@@ -43,7 +43,24 @@ class Database:
             time TEXT,
             result_winner TEXT DEFAULT ''
         )''')
+        # self.cursor.execute('''CREATE TABLE IF NOT EXISTS srv_wf_settings (
+        #                         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        #                         workflow_key TEXT NOT NULL UNIQUE,
+        #                         workflow_settings TEXT NOT NULL
+        # )''')
         self.connection.commit()
+
+    # def check_workflow_key_from_service_table(self, workflow_key):
+    #     self.cursor.execute(
+    #         '''
+    #         created_at
+    #         '''
+    #
+    #     )
+    #
+    # def save_workflow_key_to_service_table(self):
+
+
 
     def check_game_id_exists(self, game_id):
         # Проверка, существует ли game_id в базе данных

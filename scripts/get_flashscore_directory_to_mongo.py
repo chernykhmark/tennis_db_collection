@@ -1,7 +1,6 @@
 
 from lib.mongo_connect import MongoDB
 import logging
-
 log = logging.getLogger(__name__)
 
 
