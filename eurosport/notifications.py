@@ -1,11 +1,13 @@
 from telegram import Bot
 import asyncio
-
+from dotenv import load_dotenv
+load_dotenv()
+import os
 
 class BotSender:
     def __init__(self):
-        self.token = '8204765665:AAGXEvVwahAMjQisRxqk4x1QtUDhwDpEyLY'
-        self.chat_id = '1030144895'
+        self.token = os.getenv('ERROR_BOT_TOKEN')
+        self.chat_id = os.getenv('TG_USER_ADMIN')
 
     async def send_notification_async(self, message):
         try:
