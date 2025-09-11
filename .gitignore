@@ -13,5 +13,5 @@ __pycache__
 requirements.txt
 eurosport/tennis_data.db
 test
-flashscore/data/
+flashscore/data
 .env
