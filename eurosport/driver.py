@@ -25,7 +25,7 @@ def get_chrome_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-    options.add_argument('--headless')
+    #options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-gpu')
     options.add_argument('--single-process')
@@ -77,6 +77,29 @@ def driver_get_page_source(URL):
         print('driver quit')
 
     return page_source
+
+def get_page_source(driver,URL):
+    driver.get(URL)
+    try:
+        handle_cookie_popup(driver)
+        print('driver handle')
+    except:
+        pass
+    print_current_datetime()
+    print('driver works')
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((
+            By.CSS_SELECTOR,
+            "div#detail.container__detailInner.fullPage"
+        ))
+    )
+    time.sleep(2)
+    page_source = driver.page_source
+
+    return page_source
+
+
+
 
 def driver_get_tommorow_page_source(URL):
     driver = get_chrome_driver()
@@ -133,14 +156,16 @@ def load_scheduled_dict(driver):
             if current_key is not None:
                 games_dict[current_key] = href_list
             # Начинаем новую группу
-            current_key = element.text
-            href_list = []
+            if 'DOUBLES' not in element.text:
+                current_key = element.text
+                href_list = []
         elif element.get_attribute('data-event-row') == 'true':
             # Ищем ссылку внутри элемента
             try:
                 link = element.find_element(By.TAG_NAME, 'a')
                 href = link.get_attribute('href')
-                href_list.append(href)
+                if len(href.split('#')) < 2:
+                    href_list.append(href)
             except:
                 continue
 
@@ -187,14 +212,16 @@ def load_finished_dict(driver):
             if current_key is not None:
                 games_dict[current_key] = href_list
             # Начинаем новую группу
-            current_key = element.text
-            href_list = []
+            if 'DOUBLES' not in element.text:
+                current_key = element.text
+                href_list = []
         elif element.get_attribute('data-event-row') == 'true':
             # Ищем ссылку внутри элемента
             try:
                 link = element.find_element(By.TAG_NAME, 'a')
                 href = link.get_attribute('href')
-                href_list.append(href)
+                if len(href.split('#')) < 2:
+                    href_list.append(href)
             except:
                 continue
 
