@@ -40,8 +40,8 @@ if __name__ == "__main__":
             print(f'Батч до 100 элементов отправлен в базу')
 
     except Exception as e:
-        print(f"Произошла ошибка: {e}")
         error_msg = f"[{datetime.now()}] Ошибка в скрипте: {str(e)}"
         bot.send_notification(error_msg, script_name='get_mongo_links_and_bring_back_html.py')
+        print(error_msg)
     finally:
         db.close()
