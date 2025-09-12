@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 from selenium.common.exceptions import TimeoutException
 import json
-import os
 
 # ДЕКОРАТОР ДЛЯ ПОВТОРНОГО ЗАПУСКА
 
@@ -183,14 +182,14 @@ def load_scheduled_dict(driver):
     # Сохранение
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    with open(f'data/scheduled_json_{timestamp}.json', 'w', encoding='utf-8') as f:
+    with open(f'flashscore/data/scheduled_json_{timestamp}.json', 'w', encoding='utf-8') as f:
         json.dump(games_dict, f, ensure_ascii=False, indent=2)
 
     print(f"Словарь сохранен в scheduled_json_{timestamp}.json")
 
     # Дополнительно сохраняем только tennis блок HTML
     tennis_html = tennis_games_div.get_attribute('outerHTML')
-    with open(f'data/scheduled_html_{timestamp}.html', 'w', encoding='utf-8') as file:
+    with open(f'flashscore/data/scheduled_html_{timestamp}.html', 'w', encoding='utf-8') as file:
         file.write(tennis_html)
 
     print(f"Источник сохранен в scheduled_html_{timestamp}.html")
@@ -235,14 +234,14 @@ def load_finished_dict(driver):
         games_dict[current_key] = href_list
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    with open(f'data/finished_json_{timestamp}.json', 'w', encoding='utf-8') as f:
+    with open(f'flashscore/data/finished_json_{timestamp}.json', 'w', encoding='utf-8') as f:
         json.dump(games_dict, f, ensure_ascii=False, indent=2)
 
     print(f"Словарь сохранен в finished_json_{timestamp}.json")
 
     # Дополнительно сохраняем только tennis блок HTML
     tennis_html = tennis_games_div.get_attribute('outerHTML')
-    with open(f'data/finished_html_{timestamp}.html', 'w', encoding='utf-8') as file:
+    with open(f'flashscore/data/finished_html_{timestamp}.html', 'w', encoding='utf-8') as file:
         file.write(tennis_html)
 
     print(f"Источник сохранен в finished_html_{timestamp}.html")
