@@ -1,21 +1,8 @@
-chrome_update
-outdated_version
-progres.log
-cron.log
-run.sh
-get_tomorrow_games.sh
-__pycache__
-venv
-google-chrome-stable_current_amd64.deb
 cron_set
-progres.log.DS_Store
-__pycache__
-requirements.txt
-tennis_data.db
-test
-<<<<<<< HEAD
-tennis_data.db
-=======
-flashscore/dataflashscore/data/
->>>>>>> origin/main
-flashscore/data/
+eurosport/tennis_data.db
+flashscore/data
+__init__.py  
+__pycache__  
+setup.py
+venv
+.env
