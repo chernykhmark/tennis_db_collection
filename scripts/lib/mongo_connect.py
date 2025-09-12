@@ -44,7 +44,7 @@ class MongoDB:
         self.client.close()
 
 
-    def process_origin_files_from_directory(self,log):
+    def process_origin_files_from_directory(self):
 
         directory_path = self.MONGO_DATA_FILE_PATH
 
@@ -54,7 +54,7 @@ class MongoDB:
         for file_name in os.listdir(directory_path):
             file_path = os.path.join(directory_path, file_name)
             if os.path.isfile(file_path):
-                log.info(f'processing {file_name}')
+                print(f'processing {file_name}')
 
                 # Разбираем имя файла
                 parts = file_name.split('_')
@@ -78,7 +78,7 @@ class MongoDB:
                             content = json.loads(content)
                 except Exception as e:
 
-                    log.error(f"Error reading file {file_name}: {e}")
+                    print(f"Error reading file {file_name}: {e}")
                     continue
 
                 # Создаем или обновляем документ
@@ -109,7 +109,7 @@ class MongoDB:
                 {"$setOnInsert": doc},  # Вставляем только если не существует
                 upsert=True
             )
-            log.info(f'document with key {doc_key} saved')
+            print(f'document with key {doc_key} saved')
 
 
 
@@ -127,7 +127,7 @@ class MongoDB:
             }
         )
 
-    def get_new_doc(self, source_collection, type:str, log): #target_collection, external_processor, next_processor):
+    def get_new_doc(self, source_collection, type:str): #target_collection, external_processor, next_processor):
         """Периодическая обработка документов со статусом 'new'"""
         try:
             # Находим все документы со статусом "new"
@@ -139,11 +139,11 @@ class MongoDB:
             for document in new_documents:
                 docs[document["_id"]] = document.get("content", {}).get("json")
                 self.update_status(source_collection, document["_id"])
-                log.info(f'collection status is processed')
+                print(f'collection status is processed')
             return docs
 
         except Exception as e:
-            log.info(f'finished_docs for {datetime.now()} with e: {e}')
+            print(f'finished_docs for {datetime.now()} with e: {e}')
             pass
 
 

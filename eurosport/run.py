@@ -2,7 +2,8 @@ from driver import driver_get_page_source
 from shedule import get_daily_schedule
 from database import Database
 from notifications import BotSender
-from  datetime import datetime
+from datetime import datetime
+
 
 URL = 'https://www.eurosport.com/tennis/score-center.shtml'
 
@@ -25,3 +26,4 @@ def main():
 
 if __name__=='__main__':
     main()
+
