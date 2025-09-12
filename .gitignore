@@ -1,9 +1,7 @@
-chrome_update
-outdated_version
 progres.log.DS_Store
 __pycache__
 requirements.txt
+req.txt
 eurosport/tennis_data.db
 test
-flashscore/dataflashscore/data/
 .env
