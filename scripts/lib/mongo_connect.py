@@ -29,7 +29,7 @@ class MongoDB:
     def __init__(self):
         # Данные для подключения
         self.MONGO_HOST = os.getenv('MONGO_HOST')
-        self.MONGO_PORT = int(os.getenv('MONGO_PORT', '27017'))
+        self.MONGO_PORT = int(os.getenv('MONGO_PORT'))
         self.MONGO_USER = os.getenv('MONGO_USER')
         self.MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
         self.MONGO_DB_NAME = os.getenv('MONGO_DB_NAME')
@@ -44,22 +44,17 @@ class MongoDB:
         self.client.close()
 
 
-    def process_origin_files_from_directory(self):
+    def process_origin_from_directory_to_docs(self):
 
         directory_path = self.MONGO_DATA_FILE_PATH
 
         documents = {}
-
         # Ищем все файлы в директории
         for file_name in os.listdir(directory_path):
             file_path = os.path.join(directory_path, file_name)
             if os.path.isfile(file_path):
-                print(f'processing {file_name}')
-
                 # Разбираем имя файла
                 parts = file_name.split('_')
-                if len(parts) < 4:
-                    continue  # Пропускаем файлы не соответствующие шаблону
 
                 type_as = parts[0]  # "finished" или "scheduled"
                 data_type = parts[1]  # "html" или "json"
@@ -77,7 +72,6 @@ class MongoDB:
                         if data_type == 'json':
                             content = json.loads(content)
                 except Exception as e:
-
                     print(f"Error reading file {file_name}: {e}")
                     continue
 
@@ -105,6 +99,7 @@ class MongoDB:
         # Сохраняем все документы
         for doc_key, doc in documents.items():
             self.db.collection.update_one(
+                # C УСЛОВИЕМ УНИКАЛЬНОСТИ ФАЙЛА ПО ТИПУ ЗАПИСИ и ВРЕМЕНИ
                 {"created_ts": doc["created_ts"], "type_as": doc["type_as"]},
                 {"$setOnInsert": doc},  # Вставляем только если не существует
                 upsert=True
@@ -127,19 +122,19 @@ class MongoDB:
             }
         )
 
-    def get_new_doc(self, source_collection, type:str): #target_collection, external_processor, next_processor):
+    def find_new_scheduled_docs(self):
         """Периодическая обработка документов со статусом 'new'"""
         try:
             # Находим все документы со статусом "new"
-            new_documents = self.db[source_collection].find(
-                {"$and": [{"status": "new"}, {"type_as": type}]}
+            new_documents = self.db["collection"].find(
+                {"$and": [{"status": "new"}, {"type_as": 'scheduled'}]}
             ).sort("created_ts", 1)  # Сортируем по дате создания
 
             docs = {}
             for document in new_documents:
                 docs[document["_id"]] = document.get("content", {}).get("json")
-                self.update_status(source_collection, document["_id"])
-                print(f'collection status is processed')
+                self.update_status("collection", document["_id"])
+                print(f'new collection status is updated to processed')
             return docs
 
         except Exception as e:
@@ -147,78 +142,64 @@ class MongoDB:
             pass
 
 
-    def create_matches(self, data_dict: Dict, status: str):
-        """
-        Преобразует словарь с турнирами и создает документы матчей
-        Args:
-            data_dict: {parent_id: {tournament_name: [urls]}}
-            status: статус для всех создаваемых матчей
-            collection: коллекция MongoDB для вставки
-        """
+    def create_future_matches(self, data_dict: Dict):
+
         matches_to_insert = []
+        # ПРОВЕРКА УНИКАЛЬНОСТИ
+        existing_match_ids = set()
+        cursor = self.db.matches.find({}, {"match_id": 1})
+        for doc in cursor:
+            if "match_id" in doc:
+                existing_match_ids.add(doc["match_id"])
+
         try:
             for parent_id, tournaments in data_dict.items():
                 for tournament_name, urls in tournaments.items():
                     for url in urls:
+                        if '#' in url:
+                            continue
+                        match_id = url.split('?mid=')[1]
+                        if match_id in existing_match_ids:
+                            print(f"Match {match_id} already exists, skipping")
+                            continue
                         match_doc = {
                             "parent_id": parent_id,
                             "tournament_name": tournament_name,
-                            "match_id": "",
+                            "match_id": match_id,
                             "match_url": url,
-                            "html": "",
+                            "scheduled_url": url.replace('summary','h2h/all-surfaces'),
+                            "scheduled_html":'',
+                            "finished_url": url.replace('summary','summary/stats/0'),
+                            "finished_html": '',
                             "created_at": datetime.utcnow(),
-                            "type_as": status
+                            "updated_at": datetime.utcnow(),
+                            "type_as": 'sсheduled'
                         }
                         matches_to_insert.append(match_doc)
+                        existing_match_ids.add(match_id)
 
             if matches_to_insert:
                 self.db.matches.insert_many(matches_to_insert, ordered=False)
-
+                print("Новые данные вставлены")
         except Exception as e:
             print(f"Ошибка в процессе обработки: {e}")
-            return 0
+
 
     def get_matches_url_by_ids_dict(self) -> Dict[str, str]:
         """
         Возвращает словарь {_id: match_url} из коллекции matches
         """
         result_dict = {}
-
         cursor = self.db.matches.find(
-            {"html": ""},
+            {"sheduled_html": ""},
             {"_id": 1, "match_url": 1}
         )
-
-
         for doc in cursor:
             result_dict[str(doc["_id"])] = doc["match_url"]
 
         return result_dict
 
-    def update_matches_html(self, html_data_dict: Dict[str, str]):
-        """
-        Обновляет поле match_html для документов в коллекции matches
-        по совпадению _id с ключами словаря
 
-        Args:
-            html_data_dict: {_id: html_content}
-        """
-        bulk_operations = []
-
-        for doc_id, html_content in html_data_dict.items():
-            # Создаем операцию обновления для каждого совпадения
-            bulk_operations.append(
-                UpdateOne(
-                    {"_id": ObjectId(doc_id)},  # ищем по _id
-                    {"$set": {"html": html_content}},  # обновляем поле
-                    upsert=False  # только обновление, не вставка
-                )
-            )
-
-        # Выполняем bulk операцию
-        if bulk_operations:
-            self.db.matches.bulk_write(bulk_operations, ordered=False)
-            log.info(f'батч с html_content записан')
 
 
 
