@@ -173,7 +173,7 @@ class MongoDB:
                             "finished_html": '',
                             "created_at": datetime.utcnow(),
                             "updated_at": datetime.utcnow(),
-                            "type_as": 'sсheduled'
+                            "status": 'new'
                         }
                         matches_to_insert.append(match_doc)
                         existing_match_ids.add(match_id)
