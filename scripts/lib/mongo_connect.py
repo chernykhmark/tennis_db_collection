@@ -29,16 +29,16 @@ class MongoDB:
         self.client.close()
 
 
-    def get_matches_url_by_ids_dict(self) -> Dict[str, str]:
+    def get_scheduled_matches_url_by_ids_dict(self) -> Dict[str, str]:
         #Возвращает словарь {_id: match_url} из коллекции matches
         result_dict = {}
         cursor = self.db.matches.find(
-            {"html": ""},
-            {"_id": 1, "match_url": 1}
+            {"scheduled_html": ""},
+            {"_id": 1, "scheduled_url": 1}
         )
 
         for doc in cursor:
-            result_dict[str(doc["_id"])] = doc["match_url"]
+            result_dict[str(doc["_id"])] = doc["scheduled_url"]
         return result_dict
 
 

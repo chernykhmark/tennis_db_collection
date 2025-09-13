@@ -8,11 +8,11 @@ from bs4 import BeautifulSoup
 
 
 
-def process_html_of_matches():
+def process_scheduled_html_of_matches():
     # 1. Подключение к MongoDB
     driver = get_chrome_driver()
     db = MongoDB()
-    matches_dict = db.get_matches_url_by_ids_dict()
+    matches_dict = db.get_scheduled_matches_url_by_ids_dict()
     print(f"Получено {len(matches_dict)} документов")
     try:
         for match,link in tqdm(matches_dict.items()):
@@ -28,7 +28,7 @@ def process_html_of_matches():
                     db.db['matches'].update_one(
                         {"_id": match},
                         {"$set": {
-                            "html": str(target_div),
+                            "scheduled_html": str(target_div),
                             "status": "processed",
                             "processed_at": datetime.now()
                         }}
@@ -56,4 +56,4 @@ def process_html_of_matches():
         print('db close')
 
 if __name__=="__main__":
-    process_html_of_matches()
+    process_scheduled_html_of_matches()
